@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Pro</title>
+
+  <style>
+    :root{
+      --bg: #0b0b0b;
+      --panel: #111111;
+      --key: #1a1a1a;
+      --key-hover:#2a2a2a;
+      --accent:#3a3a3a;
+      --accent-2:#444444;
+      --danger:#555555;
+      --text:#e5e5e5;
+      --muted:#9a9a9a;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      gap:20px;
+      padding:20px;
+      background: linear-gradient(135deg, #0b0b0b, #1a1a1a);
+    }
+
+    /* efeito de luz suave */
+    body::before{
+      content:"";
+      position:absolute;
+      width:600px;
+      height:600px;
+      background: radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%);
+      top:-100px;
+      left:-100px;
+      filter: blur(80px);
+    }
+
+    body::after{
+      content:"";
+      position:absolute;
+      width:500px;
+      height:500px;
+      background: radial-gradient(circle, rgba(34,197,94,0.12), transparent 70%);
+      bottom:-120px;
+      right:-120px;
+      filter: blur(80px);
+    }
+
+    .app{
+      display:grid;
+      grid-template-columns: 300px 260px;
+      gap:20px;
+    }
+
+    .calculator{
+      background:#111111;
+      padding:20px;
+      border-radius:14px;
+      width:300px;
+    }
+
+    .display-wrap{
+      background: #020617;
+      border-radius:14px;
+      padding:10px;
+      margin-bottom:14px;
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .display{
+      width:100%;
+      border:none;
+      outline:none;
+      background:transparent;
+      color:#a7f3d0;
+      font-size:30px;
+      text-align:right;
+      padding:10px 6px;
+    }
+
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      text-align:right;
+      min-height:14px;
+    }
+
+    .buttons{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+
+    button{
+      padding:16px;
+      border:none;
+      border-radius:10px;
+      background:var(--key);
+      color:var(--text);
+      font-size:18px;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+
+    button:hover{
+      background:var(--key-hover);
+    }
+
+    .operator{background:#2a2a2a; color:#e5e5e5}
+    .operator:hover{filter:brightness(1.05)}
+
+    .equal{background:#3a3a3a; grid-column: span 2;}
+    .equal:hover{filter:brightness(1.05)}
+
+    .clear{background:#2f2f2f;}
+
+    .zero{grid-column: span 2}
+
+    .history{
+      width:260px;
+      background:#111111;
+      border-radius:14px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .history h3{
+      margin:0 0 10px 0;
+      font-size:16px;
+      color:var(--muted);
+    }
+
+    .history-list{
+      overflow-y:auto;
+      max-height:360px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .history-item{
+      background:#020617;
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:14px;
+      border:1px solid rgba(255,255,255,.05);
+    }
+
+    .history-item span{
+      color:var(--accent);
+      display:block;
+      margin-top:2px;
+    }
+
+    .history button{
+      margin-top:10px;
+      padding:10px;
+      font-size:13px;
+      background:#1f2937;
+      border-radius:10px;
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:11px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="calculator">
+    <div class="display-wrap">
+      <div class="sub" id="preview"></div>
+      <input type="text" id="display" class="display" disabled>
+    </div>
+
+    <div class="buttons">
+      <button onclick="clearDisplay()" class="clear">C</button>
+      <button onclick="appendValue('/')" class="operator">÷</button>
+      <button onclick="appendValue('*')" class="operator">×</button>
+      <button onclick="appendValue('-')" class="operator">−</button>
+
+      <button onclick="appendValue('7')">7</button>
+      <button onclick="appendValue('8')">8</button>
+      <button onclick="appendValue('9')">9</button>
+      <button onclick="appendValue('+')" class="operator">+</button>
+
+      <button onclick="appendValue('4')">4</button>
+      <button onclick="appendValue('5')">5</button>
+      <button onclick="appendValue('6')">6</button>
+      <button onclick="appendValue('.')">.</button>
+
+      <button onclick="appendValue('1')">1</button>
+      <button onclick="appendValue('2')">2</button>
+      <button onclick="appendValue('3')">3</button>
+      <button onclick="calculate()" class="equal">=</button>
+
+      <button onclick="appendValue('0')" class="zero">0</button>
+    </div>
+
+    <div class="hint">Use o teclado: números, + - * /, Enter e Backspace</div>
+  </div>
+
+  <div class="history">
+    <h3>Histórico</h3>
+    <div class="history-list" id="history"></div>
+    <button onclick="clearHistory()">Limpar histórico</button>
+  </div>
+
+</div>
+
+<script>
+  const display = document.getElementById('display');
+  const historyDiv = document.getElementById('history');
+  const preview = document.getElementById('preview');
+
+  function appendValue(value){
+    display.value += value;
+    updatePreview();
+  }
+
+  function clearDisplay(){
+    display.value = '';
+    preview.textContent = '';
+  }
+
+  function calculate(){
+    try{
+      const expression = display.value;
+      const result = Function('return ' + expression)();
+      addToHistory(expression, result);
+      display.value = result;
+      preview.textContent = expression;
+    }catch{
+      display.value = 'Erro';
+    }
+  }
+
+  function addToHistory(exp, res){
+    const item = document.createElement('div');
+    item.classList.add('history-item');
+    item.innerHTML = `${exp} <span>= ${res}</span>`;
+    historyDiv.prepend(item);
+  }
+
+  function clearHistory(){
+    historyDiv.innerHTML = '';
+  }
+
+  function updatePreview(){
+    try{
+      if(display.value){
+        preview.textContent = Function('return ' + display.value)();
+      } else {
+        preview.textContent = '';
+      }
+    }catch{
+      preview.textContent = '';
+    }
+  }
+
+  // suporte teclado
+  document.addEventListener('keydown', (e)=>{
+    if(!isNaN(e.key) || ['+','-','*','/','.'].includes(e.key)){
+      appendValue(e.key);
+    } else if(e.key === 'Enter'){
+      calculate();
+    } else if(e.key === 'Backspace'){
+      display.value = display.value.slice(0, -1);
+      updatePreview();
+    } else if(e.key.toLowerCase() === 'c'){
+      clearDisplay();
+    }
+  });
+</script>
+
+</body>
+</html>
